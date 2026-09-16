@@ -18,7 +18,7 @@ export function ResponsiveShell({
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div>
+    <div className="min-h-screen bg-[#f8f9fc]">
       <Sidebar
         role={role}
         mobileOpen={mobileOpen}
@@ -30,7 +30,7 @@ export function ResponsiveShell({
           subtitle={subtitle}
           onOpenMenu={() => setMobileOpen(true)}
         />
-        <div className="p-5 lg:p-8">{children}</div>
+        <div className="p-5 lg:p-8 animate-fade-in">{children}</div>
       </main>
     </div>
   );

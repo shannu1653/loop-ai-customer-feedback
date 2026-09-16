@@ -33,6 +33,7 @@ export async function retrieveFeedback(
   k = 8
 ) {
   const q = vectorize(question);
+
   const rows = await db.feedback.findMany({
     where: { workspaceId },
     include: { embedding: true },
@@ -43,14 +44,32 @@ export async function retrieveFeedback(
   const scored = rows
     .map((r) => {
       const vector = r.embedding?.vector as number[] | undefined;
-      const score = vector && Array.isArray(vector) ? cosine(q, vector) : 0;
+      const score =
+        vector && Array.isArray(vector) ? cosine(q, vector) : 0;
+
       return { r, score };
     })
     .filter((item) => item.score > 0.05)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, k);
+    .sort((a, b) => b.score - a.score);
 
-  return scored.map(({ r, score }) => ({
+  // Prevent identical feedback text from occupying all evidence slots.
+  const seenContent = new Set<string>();
+
+  const diverse = scored.filter(({ r }) => {
+    const normalized = r.content
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, " ");
+
+    if (seenContent.has(normalized)) {
+      return false;
+    }
+
+    seenContent.add(normalized);
+    return true;
+  });
+
+  return diverse.slice(0, k).map(({ r, score }) => ({
     id: r.id,
     content: r.content,
     channel: r.channel,
